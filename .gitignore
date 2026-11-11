@@ -2,3 +2,19 @@
 .DS_Store
 node_modules
 
+# Local runtime output; never publish machine/account diagnostics.
+logs/
+hema-watch-status.json
+*.log
+.env
+.env.*
+!.env.example
+*.local.json
+*.pid
+*.dmp
+*.wxapkg
+*.pcap
+*.pcapng
+*.har
+.release-check/
+

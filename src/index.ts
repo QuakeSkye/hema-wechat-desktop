@@ -39,7 +39,7 @@ const bufferToHexString = (buffer: ArrayBuffer) => {
 };
 
 const debugServer = (options: CliOptions, logger: Logger): WebSocketServer  => {
-    const wss = new WebSocketServer({ port: options.debugPort });
+    const wss = new WebSocketServer({ host: "127.0.0.1", port: options.debugPort });
     logger.info(
         `[server] debug server running on ws://localhost:${options.debugPort}`,
     );
@@ -76,12 +76,14 @@ const debugServer = (options: CliOptions, logger: Logger): WebSocketServer  => {
 
     wss.on("connection", (ws: WebSocket) => {
         logger.info("[miniapp] miniapp client connected");
+        debugMessageEmitter.emit("cdpmessage", JSON.stringify({ method: "WMPF.sessionConnected", params: {} }));
         ws.on("message", onMessage);
         ws.on("error", (err) => {
             logger.error("[miniapp] miniapp client err:", err);
         });
         ws.on("close", () => {
             logger.info("[miniapp] miniapp client disconnected");
+            debugMessageEmitter.emit("cdpmessage", JSON.stringify({ method: "WMPF.sessionDisconnected", params: {} }));
         });
     });
 
@@ -121,7 +123,7 @@ const debugServer = (options: CliOptions, logger: Logger): WebSocketServer  => {
 };
 
 const proxyServer = (options: CliOptions, logger: Logger): WebSocketServer => {
-    const wss = new WebSocketServer({ port: options.cdpPort });
+    const wss = new WebSocketServer({ host: "127.0.0.1", port: options.cdpPort });
     logger.info(
         `[server] proxy server running on ws://localhost:${options.cdpPort}`,
     );
@@ -293,6 +295,12 @@ const main = async () => {
     const debugWss = debugServer(options, logger);
     const proxyWss = proxyServer(options, logger);
     const fridaSession = await fridaServer(options, logger);
+    fridaSession.detached.connect(() => {
+        logger.info("[server] WMPF detached; stopping local debugger");
+        debugWss.close();
+        proxyWss.close();
+        process.exit(0);
+    });
 
     process.on("SIGINT", async () => {
         logger.info("[server] shutting down...");

@@ -1,32 +1,29 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: "[BUG]"
+name: 盒马兼容问题
+about: 提供版本、失败阶段及脱敏错误
+title: "[BUG] "
 labels: bug
 assignees: ''
-
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## 环境
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+- Windows 架构：
+- Node.js / Frida 版本：
+- WMPF 实际版本（不是微信主程序版本）：
+- 仓库 commit：
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## 失败阶段
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+- [ ] 安装
+- [ ] 原生钩子加载
+- [ ] CDP 连接
+- [ ] 平台遮罩处理
+- [ ] 搜索或商品详情
+- [ ] 关闭重开
 
-**Environment (please complete the following information):**
- - WMPF version
- - Browser [e.g. chrome, safari]
- - MiniApp ID [if applicable]
+## 复现步骤及结果
 
-**Additional context**
-Add any other context about the problem here.
+## 必要的脱敏错误
+
+请只提供必要行数，不上传完整流量/运行日志、小程序包、账号 token、电话、地址或聊天截图。

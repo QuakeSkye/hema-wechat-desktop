@@ -1,18 +1,27 @@
 {
-  "name": "WMPFDebugger",
+  "name": "hema-wechat-desktop",
   "version": "1.0.0",
   "main": "src/index.ts",
   "license": "GPL-2.0-only",
   "author": "evi0s",
+  "description": "Local Hema desktop WeChat compatibility helper based on WMPFDebugger",
+  "private": true,
+  "engines": { "node": ">=22" },
+  "repository": { "type": "git", "url": "https://github.com/QuakeSkye/hema-wechat-desktop.git" },
+  "scripts": {
+    "check": "tsc --noEmit && node --check hema-watch.mjs && node --check hema-session.mjs",
+    "debug": "tsx src/index.ts",
+    "watch:hema": "node hema-watch.mjs"
+  },
   "dependencies": {
-    "frida": "^17.18.0",
-    "protobufjs": "^7.5.4",
-    "ws": "^8.18.3"
+    "frida": "17.18.0",
+    "protobufjs": "7.5.4",
+    "ws": "8.18.3"
   },
   "devDependencies": {
-    "@types/node": "^24.5.2",
-    "@types/ws": "^8.18.1",
-    "tsx": "^4.23.15",
-    "typescript": "^5.9.2"
+    "@types/node": "24.5.2",
+    "@types/ws": "8.18.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.2"
   }
 }
