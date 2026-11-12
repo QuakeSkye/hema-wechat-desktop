@@ -9,7 +9,7 @@ try {
         if ($watchProcess.Name -eq 'node.exe' -and $watchProcess.CommandLine -match 'hema-watch\.mjs' -and $watchCommand.IndexOf(($PSScriptRoot.Replace('\','/') + '/'),[StringComparison]::OrdinalIgnoreCase) -ge 0) { Stop-Process -Id $watchPid }
     }
     $listener = Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort 62000 -State Listen -ErrorAction SilentlyContinue
-    if (-not $listener) { Write-Output 'Hema debugger is not running'; exit }
+    if (-not $listener) { Write-Output 'Hema debugger is not running'; return }
     $debugProcess = Get-CimInstance Win32_Process -Filter ('ProcessId = ' + $listener.OwningProcess)
     $debugCommand = ([uri]::UnescapeDataString([string]$debugProcess.CommandLine)).Replace('\','/')
     if ($debugProcess.Name -ne 'node.exe' -or $debugProcess.CommandLine -notmatch 'src[/\\]index\.ts' -or $debugCommand.IndexOf(($PSScriptRoot.Replace('\','/') + '/'),[StringComparison]::OrdinalIgnoreCase) -lt 0) {

@@ -20,6 +20,8 @@ Known supported environment: Windows x64, WMPF **26073**, Node.js 24 x64 tested 
 8. **Reopen test.** Close using Hema's top-right close button and reopen from WeChat. Confirm a fresh `waiting_for_platform_check` → `patched` event and an operable page. Test normal commodity search again if there is unresolved uncertainty.
 9. **Report.** State exact tested version, which stages passed, how many reopen tests were observed, and whether helpers remain running. State untested functions explicitly. Link local stop/start entry points when available. Never promise compatibility with all PCs or future updates.
 
+For independent daily use, direct the human to `open-hema-panel.cmd`. Use `get-hema-status.ps1` for liveness; an old `hema-watch-status.json` alone is not proof that either process is still running. `start-hema.ps1 -Repair` stops/restarts verified helpers and may close the current mini-program. Keep `hema-panel.ps1` UTF-8 **with BOM** for Windows PowerShell 5.1; preserve its singleton mutex.
+
 ## Evidence levels
 
 | Stage | Required evidence |

@@ -63,3 +63,9 @@ User reported an unrelated ordinary mini-program (WorkBuddy) showing a developer
 - Regressed NB: native gate logged NB, watcher patched and homepage operable. Its bridge must be tested without an old hidden Fresh debug connection; using the top-right mini-program close button ended that connection. WorkBuddy remained a normal non-debug target.
 - Five simulated native mutation-order regression tests passed: unrelated ID, malformed/mismatched/unreadable identity, unsupported scene, and both supported targets. These tests do not substitute for the live observations above.
 - Helper remains running with native gating; no automatic startup configured and no WeChat/mini-program package files changed.
+
+## 2026-11-12 — self-service controls
+
+Observed both background helper processes absent while an old status file still existed. The exact cause of their exit was not established. Added a process-aware status script, a visible Chinese WinForms panel and a `-Repair` launch option; no longer rely on stale state files as proof of liveness.
+
+Windows PowerShell 5.1 CLI checks observed stopped → repair/start → waiting-for-miniapp. Panel processes exposed the expected window title and were responsive. The panel uses UTF-8 BOM for Windows PowerShell 5.1 and a per-session mutex to prevent duplicate panels. No startup task or new native-hook changes were made by this UI addition.

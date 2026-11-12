@@ -47,6 +47,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -Proxy http:
 
 ### 3. 启动
 
+推荐双击 `open-hema-panel.cmd` 打开中文控制面板，点击“启动 / 修复”。面板会核实进程是否仍存在，显示“未运行／等待盒马连接／已放行”，并提供停止按钮。关闭面板不停止后台；完全退出微信或重启电脑后，可再次打开面板自行启动，不需要 AI 参与。
+
+如果显示等待连接而小程序仍被挡住，请在小程序右上角“…”菜单选择“重新进入小程序”；仅关闭窗口有时会复用旧缓存。修复按钮会先停止旧辅助再重新挂载，可能关闭当前调试中的盒马窗口。
+
+原有的无界面启动方式仍可用：
+
 1. 登录电脑微信，打开“发现 → 小程序”，先停留在小程序列表。
 2. 双击 `start-hema.cmd`，等待启动成功。
 3. 从微信中打开**盒马鲜生**或**超盒算 NB**。
@@ -97,6 +103,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -Proxy http:
 | 文件 | 用途 |
 |---|---|
 | `install.cmd` / `setup.ps1` | 首次依赖安装与源码检查 |
+| `open-hema-panel.cmd` / `hema-panel.ps1` | 自助中文状态面板、启动修复及停止 |
+| `get-hema-status.ps1` | 检查真实监听和 watcher 进程，忽略已退出进程的旧状态 |
 | `start-hema.cmd` / `start-hema.ps1` | 启动本地调试器及 watcher |
 | `stop-hema.cmd` / `stop-hema-debug.ps1` | 停止与恢复 |
 | `hema-watch.mjs` | 新会话识别与自动重应用 |

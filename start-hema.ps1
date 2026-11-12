@@ -1,3 +1,4 @@
+param([switch]$Repair)
 $ErrorActionPreference = 'Stop'
 $nodePath = (Get-Command node.exe).Source
 if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'node_modules\frida\build\frida_binding.node'))) { throw 'Run install.cmd first. Frida dependencies are missing.' }
@@ -6,6 +7,7 @@ $runtimeProcesses = @(Get-CimInstance Win32_Process -Filter "name = 'WeChatAppEx
 $versions = @($runtimeProcesses | ForEach-Object { $match=[regex]::Match($_.CommandLine,'RadiumWMPF[\\/](\d+)[\\/]'); if ($match.Success) { [int]$match.Groups[1].Value } } | Select-Object -Unique)
 if ($versions.Count -eq 0) { throw 'Open the mini-program list in WeChat first; then run start-hema.cmd before opening Hema.' }
 if ($versions.Count -ne 1 -or $versions[0] -ne 26073) { throw ('Unsupported WMPF version: ' + ($versions -join ',') + '. This Hema helper has been validated only on 26073. See docs/TROUBLESHOOTING.md.') }
+if ($Repair) { & (Join-Path $PSScriptRoot 'stop-hema-debug.ps1') }
 $logDir = Join-Path $PSScriptRoot 'logs'
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $listener = Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort 62000 -State Listen -ErrorAction SilentlyContinue
