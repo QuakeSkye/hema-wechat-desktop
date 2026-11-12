@@ -1,5 +1,6 @@
 // Local-only diagnostic client. Does not read tokens or accept privacy agreements.
 import WebSocket from 'ws';
+import { isSupportedApp } from './hema-targets.mjs';
 
 const action = process.argv[2] || 'status';
 if (!['status', 'apply', 'restore'].includes(action)) throw Error('Use status, apply, or restore');
@@ -39,11 +40,11 @@ try {
   await call('Runtime.enable');
   await call('Debugger.disable');
   await call('Debugger.enable');
-  let contextId;
+  let contextId, appid;
   for (const id of contexts.keys()) {
     try {
       const idValue = checkedValue(await evaluate(id, "typeof wx!=='undefined'&&wx.getAccountInfoSync?wx.getAccountInfoSync().miniProgram.appId:''"));
-      if (idValue === 'wx26a31270d9ab25e0') { contextId = id; break; }
+      if (isSupportedApp(idValue)) { contextId = id; appid = idValue; break; }
     } catch {}
   }
   if (!contextId) throw Error('Hema context not found. Open Hema after starting the debugger.');
@@ -70,7 +71,7 @@ try {
       frameWait = () => { clearTimeout(timer); frameWait = null; resolve(); };
     });
     const expression = `(()=>{
-      if(wx.getAccountInfoSync().miniProgram.appId!=='wx26a31270d9ab25e0')throw Error('Wrong miniapp');
+      if(wx.getAccountInfoSync().miniProgram.appId!==${JSON.stringify(appid)})throw Error('Wrong miniapp');
       const manager=e,popup=l.GI;
       if(typeof manager.isBannedPlatform!=='function'||typeof popup.clear!=='function')throw Error('Module signature changed');
       globalThis.__HEMA_DESKTOP_DIAG__={manager,popup,originalCheck:manager.isBannedPlatform,originalCache:manager.bannedPlatformCache,

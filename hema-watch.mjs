@@ -3,9 +3,9 @@
 import WebSocket from 'ws';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { TARGETS, isSupportedApp } from './hema-targets.mjs';
 
 const statePath = fileURLToPath(new URL('./hema-watch-status.json', import.meta.url));
-const APPID = 'wx26a31270d9ab25e0';
 let ws, sequence = 0, generation = 0, initializing = false;
 const pending = new Map(), scripts = new Map(), breakpoints = new Map(), seen = new Set();
 let busy = false, enabled = true;
@@ -33,8 +33,8 @@ async function initialize() {
   } catch { status('waiting_for_miniapp'); }
   finally { initializing = false; }
 }
-const patchExpression = `(()=>{
-  if(wx.getAccountInfoSync().miniProgram.appId!=='${APPID}')throw Error('Wrong miniapp');
+const patchExpression = appid => `(()=>{
+  if(wx.getAccountInfoSync().miniProgram.appId!==${JSON.stringify(appid)})throw Error('Wrong miniapp');
   if(globalThis.__HEMA_DESKTOP_DIAG__)return 'already_patched';
   const manager=e,popup=l.GI;
   if(typeof manager.isBannedPlatform!=='function'||typeof popup.clear!=='function'||typeof manager.prepareQueue!=='function')throw Error('Signature changed');
@@ -54,18 +54,18 @@ async function inspectScripts() {
       let id;
       try { id = value(await call('Runtime.evaluate', { contextId: s.executionContextId, expression: "typeof wx!=='undefined'&&wx.getAccountInfoSync?wx.getAccountInfoSync().miniProgram.appId:''", returnByValue: true })); }
       catch { continue; }
-      if (id !== APPID) continue;
+      if (!isSupportedApp(id)) continue;
       if (current !== generation) return;
       const already = value(await call('Runtime.evaluate', { contextId: s.executionContextId, expression: '!!globalThis.__HEMA_DESKTOP_DIAG__', returnByValue: true }));
-      if (already) { seen.add(s.scriptId); status('patched', { appid: APPID }); continue; }
+      if (already) { seen.add(s.scriptId); status('patched', { appid: id, name: TARGETS[id] }); continue; }
       const { scriptSource: source } = await call('Debugger.getScriptSource', { scriptId: s.scriptId });
       const marker = 'this.openModal=function(){';
       const index = source.indexOf(marker);
       if (index < 0 || source.indexOf(marker, index + 1) >= 0) { seen.add(s.scriptId); status('unsupported_module_signature'); continue; }
       const pos = index + marker.length, before = source.slice(0, pos);
       const { breakpointId } = await call('Debugger.setBreakpoint', { location: { scriptId: s.scriptId, lineNumber: before.split('\n').length - 1, columnNumber: pos - before.lastIndexOf('\n') - 1 } });
-      breakpoints.set(breakpointId, s.executionContextId); seen.add(s.scriptId);
-      status('waiting_for_platform_check');
+      breakpoints.set(breakpointId, { contextId: s.executionContextId, appid: id }); seen.add(s.scriptId);
+      status('waiting_for_platform_check', { appid: id, name: TARGETS[id] });
     }
   } catch { status('waiting_for_context'); }
   finally { busy = false; }
@@ -73,10 +73,11 @@ async function inspectScripts() {
 async function handlePause(params) {
   const own = (params.hitBreakpoints || []).filter(id => breakpoints.has(id));
   if (!own.length) return;
+  const target = breakpoints.get(own[0]);
   try {
-    const r = await call('Debugger.evaluateOnCallFrame', { callFrameId: params.callFrames[0].callFrameId, expression: patchExpression, returnByValue: true });
+    const r = await call('Debugger.evaluateOnCallFrame', { callFrameId: params.callFrames[0].callFrameId, expression: patchExpression(target.appid), returnByValue: true });
     const outcome = value(r);
-    status(outcome === 'patched' || outcome === 'already_patched' ? 'patched' : 'unexpected_result', { appid: APPID });
+    status(outcome === 'patched' || outcome === 'already_patched' ? 'patched' : 'unexpected_result', { appid: target.appid, name: TARGETS[target.appid] });
   } catch { status('patch_failed'); }
   finally {
     for (const id of own) { await call('Debugger.removeBreakpoint', { breakpointId: id }).catch(() => {}); breakpoints.delete(id); }

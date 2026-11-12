@@ -11,7 +11,7 @@
 1. Bind debug/CDP listeners to 127.0.0.1 only.
 2. Add the Windows 26073 version configuration from the comment above.
 3. Emit local connection lifecycle events and stop the server when the instrumented runtime detaches.
-4. Add a Hema-only JS session patch and lifecycle watcher. No global platform API changes, persistent mini-program package modification, or automatic consent.
+4. Add an explicit allowlist for Hema Fresh and 超盒算 NB, a JS session patch and lifecycle watcher. No global platform API changes, persistent mini-program package modification, or automatic consent.
 5. Add Windows install/start/stop entry points, a public npm lockfile, version checks, documentation and source validation CI.
 6. Replace the root README with Hema-specific instructions; preserve original READMEs in `docs/upstream/` and retain general upstream adaptation/debugging documents.
 

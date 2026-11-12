@@ -1,10 +1,14 @@
 # hema-wechat-desktop
 
-电脑微信盒马小程序的本地运行时兼容辅助程序，基于 [evi0s/WMPFDebugger](https://github.com/evi0s/WMPFDebugger)。
+电脑微信盒马鲜生、超盒算 NB 小程序的本地运行时兼容辅助程序，基于 [evi0s/WMPFDebugger](https://github.com/evi0s/WMPFDebugger)。
 
 盒马会检查设备平台，并在 Windows 上显示“当前环境不支持使用”。本项目在官方微信小程序运行时中，只临时调整盒马自身的平台判断，让原有协议流程继续执行。关闭重开盒马时，后台程序会自动重新应用。
 
 **已验证：Windows x64、WMPF 26073、Node.js 24 x64、盒马小程序 AppID `wx26a31270d9ab25e0`。** 2026-11-11 在一台电脑上实测首页、搜索、商品详情和关闭重开成功。尚未验证其他电脑、其他 WMPF 版本、下单或支付。见[验证记录](docs/VALIDATION.md)。
+
+支持列表由 `hema-targets.mjs` 明确维护：盒马鲜生 `wx26a31270d9ab25e0`、超盒算 NB `wx28be50015b0f8a29`。两者有各自的协议、登录与业务流程；不会对任意其他小程序放行。
+
+2026-11-12 已在同一电脑补充实测 NB 首页、纯牛奶搜索、商品详情与右上角关闭重开，均通过。下单和支付未测试。
 
 如果让 AI 操作，请把本仓库链接交给它，并要求先完整阅读 [AGENTS.md](AGENTS.md)。
 
@@ -45,12 +49,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -Proxy http:
 
 1. 登录电脑微信，打开“发现 → 小程序”，先停留在小程序列表。
 2. 双击 `start-hema.cmd`，等待启动成功。
-3. 从微信中打开**盒马鲜生**。
+3. 从微信中打开**盒马鲜生**或**超盒算 NB**。
 4. 需要时，由你自己阅读并确认盒马协议、完成登录或其他授权。
 
 本项目的启动器只允许已验证的 **WMPF 26073**。这里的版本是微信的小程序框架版本，**不是微信主程序版本，也不是盒马包版本**。不匹配时会停止，不会自动换用其他版本偏移。
 
 辅助程序持续运行期间，可以关闭、重开盒马；首次画面可能短暂显示限制页，随后自动放行。完全退出微信或重启电脑后，重新按上述启动步骤操作。没有设置开机自启或计划任务。
+
+目前请一次只打开一个目标小程序。切换鲜生与 NB 时，先关闭当前小程序，再打开另一个；上游桥接共享 CDP 会话，尚未支持多个目标同时调试。
 
 ### 4. 检查是否真的成功
 
@@ -92,6 +98,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -Proxy http:
 | `start-hema.cmd` / `start-hema.ps1` | 启动本地调试器及 watcher |
 | `stop-hema.cmd` / `stop-hema-debug.ps1` | 停止与恢复 |
 | `hema-watch.mjs` | 新会话识别与自动重应用 |
+| `hema-targets.mjs` | 两个已核实目标的 AppID 支持列表 |
 | `hema-session.mjs` | 停止恢复时使用的单次诊断客户端 |
 | `frida/config/win32/addresses.26073.json` | 已测试版本的原生偏移 |
 | [AGENTS.md](AGENTS.md) | AI 操作顺序、边界和成功判据 |

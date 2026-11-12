@@ -30,6 +30,18 @@ No chat content, account tokens, phone numbers, delivery addresses, machine-spec
 - Cart, orders, payment, or all possible login/permission flows.
 - Unattended operation across OS reboots. No automatic startup was configured.
 
+## 2026-11-12 — 超盒算 NB extension
+
+Verified identity: `wx28be50015b0f8a29`, title `超盒算NB 真实惠 够放心`, mini-program page package 148, same WMPF 26073 / Windows x64 environment.
+
+- Local source inspection confirmed the same `isBannedPlatform` / `bannedPlatformCache` / agreement-queue design, with a distinct AppID.
+- Added an explicit shared target allowlist instead of permitting arbitrary mini-programs; both session client and watcher use it.
+- Runtime patch removed the unsupported-environment screen and showed the normal NB privacy agreement. The human user confirmed it through the UI.
+- Homepage loaded; searching `纯牛奶` returned real products and prices. Opened `NB 纯牛奶 1L` detail with price, specification and ingredient/detail sections.
+- Closed NB using its top-right close button and reopened it through its official entry; the watcher identified the new NB session, reapplied, and the homepage remained operable without repeating the consent prompt.
+- Multiple simultaneous mini-program debug sessions are not established: the upstream CDP bridge shares IDs/state. Tests and instructions use one supported target at a time; switch by closing the current one first.
+- No cart/order/payment actions were taken. No account, address, phone, traffic dump or screenshot is published.
+
 Source/lockfile/installer checks in CI are separate from these live observations. Do not mark another environment supported until native connection, UI behavior, live search, product detail and reopen are independently verified there.
 
 ## Publication checks — 2026-11-11
