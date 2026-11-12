@@ -28,6 +28,8 @@ type HookConfig = {
     CastToJsonHookOffset?: string;
     SceneOffsets?: number[];
     MiniAppConfigStructOffsets?: StructOffsetConfig;
+    AppIdStringOffsets?: number[];
+    AllowedAppIds?: string[];
 };
 
 const debugMessageEmitter = new DebugMessageEmitter();
@@ -259,9 +261,16 @@ const fridaServer = async (options: CliOptions, logger: Logger): Promise<frida.S
                     ),
                 )
             ).toString();
-            configContent = JSON.stringify(JSON.parse(configContent));
+            const config: HookConfig = JSON.parse(configContent);
+            if (!Array.isArray(config.AppIdStringOffsets) || config.AppIdStringOffsets.length !== 2) {
+                throw new Error("Native AppID gate has not been verified for this build");
+            }
+            const targets = JSON.parse(await promises.readFile(path.join(projectRoot, "hema-targets.json"), "utf8"));
+            const appIds = Object.keys(targets);
+            if (appIds.length === 0 || appIds.some(id => !/^wx[0-9a-f]{16}$/.test(id))) throw new Error("Invalid target identities");
+            configContent = JSON.stringify({ ...config, AllowedAppIds: appIds });
         } catch (e) {
-            throw new Error(`[frida] version config not found: ${wmpfVersion}`);
+            throw new Error(`[frida] verified native AppID gate/config unavailable for version ${wmpfVersion}`);
         }
     }
 
@@ -279,13 +288,16 @@ const fridaServer = async (options: CliOptions, logger: Logger): Promise<frida.S
             return;
         }
 
-        logger.frida_debug("[frida client]", message.payload);
+        const payload = message.payload as { type?: string; action?: string; appid?: string };
+        if (payload?.type === "native-scope") {
+            logger.info(payload.action === "allowed" ? `[scope] Hema launch enabled: ${payload.appid}` : "[scope] non-target launch left unchanged");
+        } else logger.frida_debug("[frida client]", message.payload);
     });
     await script.load();
     logger.info(
         `[frida] script loaded, WMPF version: ${wmpfVersion}, pid: ${wmpfPid}`,
     );
-    logger.info(`[frida] you can now open any miniapps`);
+    logger.info(`[frida] Hema-only native launch gate enabled; other miniapps retain normal launch`);
     return session;
 };
 

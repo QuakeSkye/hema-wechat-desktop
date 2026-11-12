@@ -6,7 +6,7 @@
 
 **已验证：Windows x64、WMPF 26073、Node.js 24 x64、盒马小程序 AppID `wx26a31270d9ab25e0`。** 2026-11-11 在一台电脑上实测首页、搜索、商品详情和关闭重开成功。尚未验证其他电脑、其他 WMPF 版本、下单或支付。见[验证记录](docs/VALIDATION.md)。
 
-支持列表由 `hema-targets.mjs` 明确维护：盒马鲜生 `wx26a31270d9ab25e0`、超盒算 NB `wx28be50015b0f8a29`。两者有各自的协议、登录与业务流程；不会对任意其他小程序放行。
+支持列表由 `hema-targets.json` 统一维护（`hema-targets.mjs` 供客户端读取）：盒马鲜生 `wx26a31270d9ab25e0`、超盒算 NB `wx28be50015b0f8a29`。两者有各自的协议、登录与业务流程；不会对任意其他小程序放行。
 
 2026-11-12 已在同一电脑补充实测 NB 首页、纯牛奶搜索、商品详情与右上角关闭重开，均通过。下单和支付未测试。
 
@@ -56,7 +56,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -Proxy http:
 
 辅助程序持续运行期间，可以关闭、重开盒马；首次画面可能短暂显示限制页，随后自动放行。完全退出微信或重启电脑后，重新按上述启动步骤操作。没有设置开机自启或计划任务。
 
-目前请一次只打开一个目标小程序。切换鲜生与 NB 时，先关闭当前小程序，再打开另一个；上游桥接共享 CDP 会话，尚未支持多个目标同时调试。
+目前请一次只打开一个目标小程序。切换鲜生与 NB 时，用小程序右上角圆形关闭按钮结束当前目标，再打开另一个；仅隐藏/最小化窗口可能保留调试连接。上游桥接共享 CDP 会话，尚未支持多个目标同时调试。普通非目标小程序不进入该调试通道。
+
+2026-11-12 已修复旧版影响其他小程序的问题：原生启动钩子会先核对两个独立的 AppID 字段，只有两个盒马目标匹配时才切换调试模式。未知标识、字段不一致或无法读取时均保持原样。更新旧版本后请先停止、再重启辅助程序，并重新进入受影响的小程序。
 
 ### 4. 检查是否真的成功
 
@@ -78,7 +80,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -Proxy http:
 
 ```text
 官方电脑微信 / WMPF 26073
-  → Frida 临时挂载小程序公共运行时，建立本机 CDP 桥接
+  → 原生启动层先核对 AppID，仅为两个盒马目标启用本机 CDP
   → watcher 核对逻辑层 AppID 为盒马
   → 在周期检查处取得盒马平台判断对象
   → 临时修改 isBannedPlatform 及它的缓存
@@ -86,7 +88,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -Proxy http:
   → 新盒马会话创建后自动重复
 ```
 
-原生调试钩子挂载的是微信小程序的公共运行时；JavaScript 平台补丁只针对核对过 AppID 的盒马上下文。设备 API 仍会报告真实的 `windows`，不会全局伪造手机信息。程序不会替你接受协议，不读取或导出账号 token，不自动加购、下单或支付。
+原生调试钩子挂载的是微信小程序的公共运行时，但在修改启动标志、场景和调试连接之前，先通过已验证的 26073 启动结构核对 AppID；其他小程序不改变启动参数。JavaScript 平台补丁再独立检查 AppID。设备 API 仍会报告真实的 `windows`，不会全局伪造手机信息。程序不会替你接受协议，不读取或导出账号 token，不自动加购、下单或支付。
 
 调试服务仅监听 `127.0.0.1:9421` 与 `127.0.0.1:62000`。不要将其映射或转发到外网。
 
@@ -98,7 +100,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -Proxy http:
 | `start-hema.cmd` / `start-hema.ps1` | 启动本地调试器及 watcher |
 | `stop-hema.cmd` / `stop-hema-debug.ps1` | 停止与恢复 |
 | `hema-watch.mjs` | 新会话识别与自动重应用 |
-| `hema-targets.mjs` | 两个已核实目标的 AppID 支持列表 |
+| `hema-targets.json` / `hema-targets.mjs` | 原生层与客户端共用的 AppID 支持列表 |
 | `hema-session.mjs` | 停止恢复时使用的单次诊断客户端 |
 | `frida/config/win32/addresses.26073.json` | 已测试版本的原生偏移 |
 | [AGENTS.md](AGENTS.md) | AI 操作顺序、边界和成功判据 |

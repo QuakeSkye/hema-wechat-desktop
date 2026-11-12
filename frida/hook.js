@@ -119,6 +119,25 @@ const handleOnLoadStart = (a1, config) => {
         miniappScenePtr = remoteDebugConfigPtr.add(structOffsets.SceneOffset);
     }
 
+    // Verified 26073 libc++ short strings. Fail closed before any mutation.
+    const idOffsets = config.AppIdStringOffsets;
+    if (!Array.isArray(idOffsets) || idOffsets.length !== 2 || !Array.isArray(config.AllowedAppIds)) return false;
+    const identities = idOffsets.map(offset => {
+        if (!Number.isInteger(offset) || offset < 0 || offset > 512) return null;
+        try {
+            const field = miniappLaunchConfigPtr.add(offset);
+            if (field.add(23).readU8() !== 18 || field.add(18).readU8() !== 0) return null;
+            const value = field.readUtf8String(18);
+            return /^wx[0-9a-f]{16}$/.test(value) ? value : null;
+        } catch { return null; }
+    });
+    if (!identities[0] || identities[0] !== identities[1]) return false;
+    const appid = identities[0];
+    if (!config.AllowedAppIds.includes(appid)) {
+        send({ type: 'native-scope', action: 'skipped' });
+        return false;
+    }
+
     // 1000: from issue #83 <-- will crash the process
     // 1007: from issue #80
     // 1008: from issue #53
@@ -140,7 +159,7 @@ const handleOnLoadStart = (a1, config) => {
         1256, 1260, 1302, 1308,
     ];
     if (!sceneNumberArray.includes(miniappScenePtr.readInt())) {
-        return;
+        return false;
     }
 
     send(`[hook] scene: ${miniappScenePtr.readInt()}`);
@@ -173,22 +192,23 @@ const handleOnLoadStart = (a1, config) => {
             .add(structOffsets.RemoteDebugModeOffset);
     send(`[hook] remote debug mode: ${remoteDebugModePtr.readInt()} -> 1`);
     remoteDebugModePtr.writeInt(1);
+    send({ type: 'native-scope', action: 'allowed', appid });
+    return true;
 };
 
 const patchOnLoadStart = (base, config) => {
     // xref: AppletIndexContainer::OnLoadStart
     Interceptor.attach(base.add(config.LoadStartHookOffset), {
         onEnter(args) {
-            send(
-                `[inteceptor] AppletIndexContainer::OnLoadStart onEnter, ` +
-                `indexContainer.this: ${args[0]}`,
-            );
-            // write debug_flag to 0x1
-            if (args[1].and(0xff).toInt32() !== 1) {
-                args[1] = args[1].and(ptr("0xffffffffffffff00")).or(1);
+            try {
+                // Unknown apps/layouts keep both their flags and launch data.
+                if (!handleOnLoadStart(args[0], config)) return;
+                if (args[1].and(0xff).toInt32() !== 1) {
+                    args[1] = args[1].and(ptr("0xffffffffffffff00")).or(1);
+                }
+            } catch {
+                send({ type: 'native-scope', action: 'skipped' });
             }
-            // handle onLoadStart parameters
-            handleOnLoadStart(args[0], config);
         },
         onLeave(retval) {
             // do nothing
